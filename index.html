@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เช็คราคาไข่ไก่ไทย</title>
+<meta name="description" content="เช็คราคาไข่ไก่ไทยทุกแหล่ง ทุกแพ็คเกจ ราคาปกติ โปรโมชัน วันหมดอายุ ขับเคลื่อนด้วย Gemini AI">
+<style>
+:root {
+  --bg:#fafaf8; --surface:#fff; --border:#e8e5df; --border-soft:#f0ede8;
+  --text:#1a1917; --muted:#7a7570;
+  --accent:#1a73e8; --accent-bg:#eef4fd; --accent-border:#aecbfa;
+  --green:#1e7e4a; --green-bg:#e8f5ee;
+  --red:#c0392b; --red-bg:#fdf0ee;
+  --orange:#d35400; --orange-bg:#fef3eb;
+  --yellow:#856404; --yellow-bg:#fff8e1;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#181714; --surface:#222019; --border:#2e2c28; --border-soft:#252320;
+    --text:#f0ede8; --muted:#8a8680;
+    --accent:#4a9eff; --accent-bg:#0f1f38; --accent-border:#1e3a5f;
+    --green:#4caf7d; --green-bg:#0a2018;
+    --red:#e07070; --red-bg:#2a0f0f;
+    --orange:#e07b35; --orange-bg:#2a1608;
+    --yellow:#d4a030; --yellow-bg:#221a04;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun','Noto Sans Thai',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.6;min-height:100vh}
+
+/* HEADER */
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;height:52px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10}
+.hdr-logo{font-size:22px}
+.hdr-title{font-size:15px;font-weight:700;letter-spacing:-.01em}
+.hdr-gemini{margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:20px;padding:3px 10px}
+.hdr-gemini span{width:7px;height:7px;border-radius:50%;background:var(--accent);display:inline-block}
+
+main{max-width:1080px;margin:0 auto;padding:20px 14px 60px}
+
+/* SETUP CARD */
+.setup-card{background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:10px;padding:14px 18px;margin-bottom:18px}
+.setup-card h3{font-size:13px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:7px}
+.setup-card p{font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.5}
+.setup-card a{color:var(--accent)}
+.key-row{display:flex;gap:8px;flex-wrap:wrap}
+.key-row input{flex:1;min-width:0;height:36px;padding:0 12px;border:1px solid var(--accent-border);border-radius:7px;background:var(--surface);color:var(--text);font-size:12px;font-family:monospace}
+.key-row input:focus{outline:none;border-color:var(--accent)}
+.btn-sm{height:36px;padding:0 16px;background:var(--accent);color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap}
+.btn-sm:hover{opacity:.88}
+.key-ok{font-size:11px;color:var(--green);margin-top:5px;display:none}
+
+/* FILTERS */
+.filter-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-bottom:16px}
+.frow{display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;margin-bottom:10px}
+.frow:last-child{margin-bottom:0}
+.flabel{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;min-width:52px;padding-top:5px;flex-shrink:0}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{font-size:12px;padding:4px 11px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .1s;line-height:1.5}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* SEARCH */
+.search-bar{display:flex;gap:10px;align-items:center;margin-bottom:18px}
+.btn-search{flex:1;height:44px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .12s}
+.btn-search:hover:not(:disabled){opacity:.88}
+.btn-search:disabled{opacity:.4;cursor:not-allowed}
+.ts{font-size:11px;color:var(--muted);white-space:nowrap}
+
+/* METRICS */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+@media(max-width:560px){.metrics{grid-template-columns:repeat(2,1fr)}}
+.met{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+.met-l{font-size:11px;color:var(--muted);margin-bottom:2px}
+.met-v{font-size:20px;font-weight:700;letter-spacing:-.02em}
+.c-green{color:var(--green)} .c-orange{color:var(--orange)} .c-red{color:var(--red)} .c-yellow{color:var(--yellow)}
+
+/* BEST PROMO BANNER */
+.promo-banner{background:var(--orange-bg);border:1px solid color-mix(in srgb,var(--orange) 30%,transparent);border-radius:10px;padding:11px 16px;margin-bottom:14px;font-size:13px;display:flex;gap:9px;align-items:center;line-height:1.5}
+
+/* TABLE */
+.tbl-ctrl{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+.tbl-ctrl-title{font-size:13px;font-weight:600}
+.sort-btns{display:flex;gap:4px;margin-left:auto}
+.sbtn{font-size:11px;padding:3px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .1s}
+.sbtn.on{background:var(--surface);color:var(--text);border-color:var(--text)}
+.sbtn:hover{color:var(--text)}
+
+.tbl-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:720px}
+thead th{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:9px 12px;background:var(--bg);border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--border-soft)}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover td{background:var(--bg)}
+tbody td{padding:10px 12px;vertical-align:top;font-size:13px}
+
+.pname{font-weight:600;font-size:13px;line-height:1.3}
+.p-img-ph{width:48px;height:48px;border-radius:7px;border:1px solid var(--border);background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:22px}
+.psub{font-size:11px;color:var(--muted);margin-top:1px}
+.pnote{font-size:10px;color:var(--muted);margin-top:2px}
+
+.tag{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:5px;white-space:nowrap}
+.tag-online{background:#e8f0fe;color:#1a5db5}
+.tag-retail{background:#e8f5ee;color:#1a6b3c}
+.tag-wholesale{background:var(--yellow-bg);color:var(--yellow)}
+.tag-gov{background:var(--border-soft);color:var(--muted)}
+@media(prefers-color-scheme:dark){
+  .tag-online{background:#0f1e3a;color:#7aadff}
+  .tag-retail{background:#0a2018;color:#4caf7d}
+}
+
+.p-normal{font-size:14px;font-weight:700}
+.p-was{font-size:11px;color:var(--muted);text-decoration:line-through}
+.p-promo{font-size:14px;font-weight:700;color:var(--orange)}
+.disc{display:inline-block;font-size:11px;font-weight:700;padding:2px 6px;border-radius:4px;background:var(--red-bg);color:var(--red);margin-top:2px}
+.per-egg{font-size:12px;color:var(--muted)}
+
+.exp{font-size:11px;font-weight:600}
+.exp-ok{color:var(--green)} .exp-warn{color:var(--yellow)} .exp-soon{color:var(--red)} .exp-none{color:var(--muted)}
+
+.src-link{font-size:11px;color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:2px;margin-top:3px}
+.src-link:hover{text-decoration:underline}
+
+/* CITATIONS */
+.cite-section{margin-top:18px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px}
+.cite-section h4{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;margin-bottom:10px}
+.cite-list{display:flex;flex-direction:column;gap:6px}
+.cite-item{font-size:12px;display:flex;gap:8px;align-items:flex-start}
+.cite-num{flex-shrink:0;width:20px;height:20px;background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--accent)}
+.cite-item a{color:var(--accent);word-break:break-all}
+.cite-item a:hover{text-decoration:underline}
+
+/* STATE */
+.state-box{text-align:center;padding:48px 20px;color:var(--muted)}
+.state-big{font-size:42px;margin-bottom:10px}
+.state-box p{font-size:14px}
+
+/* LOADER */
+.ld{display:inline-flex;gap:4px;align-items:center}
+.ld span{width:5px;height:5px;border-radius:50%;background:currentColor;animation:lp 1.1s ease-in-out infinite}
+.ld span:nth-child(2){animation-delay:.18s}
+.ld span:nth-child(3){animation-delay:.36s}
+@keyframes lp{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+
+/* NOTICE */
+.notice{border-radius:8px;padding:10px 14px;font-size:12px;margin-bottom:14px;display:flex;gap:8px;line-height:1.5;align-items:flex-start}
+.n-err{background:var(--red-bg);color:var(--red);border:1px solid color-mix(in srgb,var(--red) 25%,transparent)}
+.n-warn{background:var(--yellow-bg);color:var(--yellow);border:1px solid color-mix(in srgb,var(--yellow) 25%,transparent)}
+
+footer{text-align:center;padding:20px;font-size:11px;color:var(--muted);border-top:1px solid var(--border);margin-top:40px}
+footer a{color:var(--accent)}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="hdr-logo">🥚</span>
+  <span class="hdr-title">ราคาไข่ไก่ไทย</span>
+  <span class="hdr-gemini"><span></span>Gemini AI · ฟรี</span>
+</header>
+
+<main>
+
+  <!-- API KEY -->
+  <div class="setup-card" id="setup-card">
+    <h3>🔑 ใส่ Google Gemini API Key</h3>
+    <p>
+      ขอ Key ฟรีได้ที่ <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a> (ใช้ Google Account ปกติ ไม่ต้องใส่บัตรเครดิต)<br>
+      ฟรี <strong>1,500 req/วัน</strong> · Key เก็บแค่ใน browser ของคุณ ไม่ส่งไปที่อื่น
+    </p>
+    <div class="key-row">
+      <input type="password" id="key-input" placeholder="AIzaSy..." autocomplete="off" spellcheck="false">
+      <button class="btn-sm" onclick="saveKey()">บันทึก</button>
+      <button class="btn-sm" style="background:transparent;color:var(--accent);border:1px solid var(--accent-border)" onclick="document.getElementById('setup-card').style.display='none'">ซ่อน</button>
+    </div>
+    <div class="key-ok" id="key-ok">✓ บันทึก Key แล้ว</div>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="filter-card">
+    <div class="frow">
+      <span class="flabel">แหล่ง</span>
+      <div class="chips" id="f-src">
+        <button class="chip on" data-v="all">ทั้งหมด</button>
+        <button class="chip" data-v="Tops">Tops</button>
+        <button class="chip" data-v="Lotus">Lotus's</button>
+        <button class="chip" data-v="Big C">Big C</button>
+        <button class="chip" data-v="Makro">Makro</button>
+        <button class="chip" data-v="Shopee">Shopee</button>
+        <button class="chip" data-v="Lazada">Lazada</button>
+        <button class="chip" data-v="ตลาดไท">ตลาดไท</button>
+        <button class="chip" data-v="กรมพาณิชย์">กรมพาณิชย์</button>
+      </div>
+    </div>
+    <div class="frow">
+      <span class="flabel">แบรนด์</span>
+      <div class="chips" id="f-brand">
+        <button class="chip on" data-v="all">ทั้งหมด</button>
+        <button class="chip" data-v="CP">CP ซีพี</button>
+        <button class="chip" data-v="Tops">Tops</button>
+        <button class="chip" data-v="S-Pure">S-Pure เบทาโกร</button>
+        <button class="chip" data-v="ฟาร์มไข่">ไข่ฟาร์ม</button>
+        <button class="chip" data-v="อื่นๆ">แบรนด์อื่น</button>
+      </div>
+    </div>
+    <div class="frow">
+      <span class="flabel">เบอร์</span>
+      <div class="chips" id="f-size">
+        <button class="chip on" data-v="all">ทั้งหมด</button>
+        <button class="chip" data-v="เบอร์ 0">เบอร์ 0</button>
+        <button class="chip" data-v="เบอร์ 1">เบอร์ 1</button>
+        <button class="chip" data-v="เบอร์ 2">เบอร์ 2</button>
+        <button class="chip" data-v="เบอร์ 3">เบอร์ 3</button>
+        <button class="chip" data-v="เบอร์ 4">เบอร์ 4</button>
+      </div>
+    </div>
+    <div class="frow">
+      <span class="flabel">แพ็คเกจ</span>
+      <div class="chips" id="f-pack">
+        <button class="chip on" data-v="all">ทั้งหมด</button>
+        <button class="chip" data-v="ฟองละ">ฟองละ</button>
+        <button class="chip" data-v="แพ็ค 6">แพ็ค 6</button>
+        <button class="chip" data-v="แพ็ค 10">แพ็ค 10</button>
+        <button class="chip" data-v="แพ็ค 12">แพ็ค 12</button>
+        <button class="chip" data-v="แผง 30">แผง 30</button>
+        <button class="chip" data-v="แผง 36">แผง 36</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEARCH BAR -->
+  <div class="search-bar">
+    <button class="btn-search" id="btn-s" onclick="doSearch()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      ค้นหาราคาล่าสุด
+    </button>
+    <span class="ts" id="ts"></span>
+  </div>
+
+  <!-- RESULTS AREA -->
+  <div id="results">
+    <div class="state-box">
+      <div class="state-big">🥚</div>
+      <p>กดค้นหาเพื่อดูราคาจากทุกแหล่ง<br>
+      <span style="font-size:12px">ราคาปกติ · โปรโมชัน · วันหมดอายุ · ลิงก์อ้างอิง</span></p>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  ข้อมูลจาก Gemini AI + Google Search · ไม่รับประกันความถูกต้อง 100% · ตรวจสอบกับแหล่งอ้างอิงก่อนซื้อ<br>
+  <a href="https://aistudio.google.com/apikey" target="_blank">ขอ Gemini API Key ฟรี</a> · สร้างด้วย <a href="https://ai.google.dev" target="_blank">Google Gemini API</a>
+</footer>
+
+<script>
+// ─── CONFIG ───────────────────────────────────────────────────────────────
+const GEMINI_MODEL = 'gemini-2.5-flash';
+const GEMINI_URL   = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+
+// ─── STATE ────────────────────────────────────────────────────────────────
+const sel = { src:'all', brand:'all', size:'all', pack:'all' };
+let allProducts = [];
+let citations   = [];
+let sortKey = 'price_eff';
+let sortAsc = true;
+
+// ─── INIT ─────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const k = localStorage.getItem('egg_gemini_key');
+  if (k) {
+    document.getElementById('key-input').value = k;
+    document.getElementById('setup-card').style.display = 'none';
+  }
+  initChips();
+});
+
+// ─── KEY ──────────────────────────────────────────────────────────────────
+function saveKey() {
+  const v = document.getElementById('key-input').value.trim();
+  if (!(v.startsWith('AIza') || v.startsWith('AQ.'))) { alert('Key ไม่ถูกต้อง ต้องขึ้นต้นด้วย AIza หรือ AQ.'); return; }
+  localStorage.setItem('egg_gemini_key', v);
+  document.getElementById('key-ok').style.display = 'block';
+  setTimeout(() => { document.getElementById('setup-card').style.display = 'none'; }, 900);
+}
+function getKey() { return localStorage.getItem('egg_gemini_key') || ''; }
+
+// ─── CHIPS ────────────────────────────────────────────────────────────────
+function initChips() {
+  [['f-src','src'],['f-brand','brand'],['f-size','size'],['f-pack','pack']].forEach(([id, key]) => {
+    document.getElementById(id).querySelectorAll('.chip').forEach(c => {
+      c.addEventListener('click', () => {
+        sel[key] = c.dataset.v;
+        document.getElementById(id).querySelectorAll('.chip').forEach(x => x.classList.remove('on'));
+        c.classList.add('on');
+      });
+    });
+  });
+}
+
+// ─── PROMPT ───────────────────────────────────────────────────────────────
+const SRC_MAP = {
+  'Tops':'Tops Online (tops.co.th)', 'Lotus':"Lotus's Online (lotuss.co.th)",
+  'Big C':'Big C Online (bigc.co.th)', 'Makro':'Makro Online (makro.co.th)',
+  'Shopee':'Shopee Thailand (shopee.co.th)', 'Lazada':'Lazada Thailand (lazada.co.th)',
+  'ตลาดไท':'ตลาดไท (talaadthai.com)', 'กรมพาณิชย์':'กรมการค้าภายใน (data.moc.go.th)'
+};
+
+function buildPrompt(srcKeys) {
+  const today = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+  const srcText = srcKeys.map(k => SRC_MAP[k] || k).join(', ');
+
+  const brandText = sel.brand === 'all' ? 'ทุกแบรนด์ (CP, Tops, S-Pure, Betagro, ไข่ฟาร์ม DLD)' : `เน้นแบรนด์: ${sel.brand}`;
+  const sizeText  = sel.size  === 'all' ? 'ทุกเบอร์ (0-4)'   : `เน้น: ${sel.size}`;
+  const packText  = sel.pack  === 'all' ? 'ทุกแพ็คเกจ (ฟองละ/แพ็ค6/10/12/แผง30/36)' : `เน้น: ${sel.pack}`;
+
+  return `วันที่: ${today}
+ค้นหาราคาไข่ไก่ไทยจาก: ${srcText}
+${brandText} | ${sizeText} | ${packText}
+
+สำหรับแต่ละสินค้าให้หา: ราคาปกติ, ราคาโปรโมชัน (ถ้ามี), วันสิ้นสุดโปรโมชัน, URL หน้าสินค้าโดยตรง
+
+จำกัดไม่เกิน 12 รายการต่อรอบ เพื่อให้ JSON ครบถ้วนไม่ถูกตัด
+
+ตอบด้วย JSON เท่านั้น ห้ามมี markdown backtick ห้ามมีข้อความนำหน้าหรือท้าย:
+{
+  "scraped_at": "วันเวลา",
+  "products": [
+    {
+      "brand": "CP",
+      "product_name": "ซีพีไข่ไก่เบอร์1 แพ็ค10",
+      "egg_type": "ไข่ไก่",
+      "size": "เบอร์ 1",
+      "package": "แพ็ค 10",
+      "package_count": 10,
+      "source_name": "Tops Online",
+      "source_type": "online",
+      "price_normal": 49.00,
+      "price_promo": null,
+      "discount_pct": null,
+      "promo_detail": null,
+      "promo_end_date": null,
+      "price_per_egg": 4.90,
+      "url": "https://...",
+      "note": ""
+    }
+  ],
+  "summary": {
+    "cheapest_per_egg": {"price":2.8,"product":"...","source":"..."},
+    "best_promo": {"discount_pct":20,"product":"...","source":"...","end_date":"..."},
+    "avg_tray30": 105
+  }
+}
+
+สำคัญ: ขึ้นต้นด้วย { และจบด้วย } เท่านั้น ห้ามมีคำอธิบาย ห้ามมี \`\`\` ห้ามมีข้อความใดๆ นอก JSON หากไม่พบราคาจริงให้ใส่ products เป็น array ว่าง []`;
+}
+
+// ─── SEARCH (multi-batch) ──────────────────────────────────────────────────
+async function doSearch() {
+  const key = getKey();
+  if (!key) {
+    document.getElementById('setup-card').style.display = 'block';
+    document.getElementById('setup-card').scrollIntoView({behavior:'smooth'});
+    return;
+  }
+
+  // decide which source-batches to run
+  const allSources = Object.keys(SRC_MAP);
+  let batches;
+  if (sel.src === 'all') {
+    // 4 batches of 2 sources each → keeps each JSON short & complete
+    batches = [];
+    for (let i = 0; i < allSources.length; i += 2) batches.push(allSources.slice(i, i + 2));
+  } else {
+    batches = [[sel.src]];
+  }
+
+  const btn = document.getElementById('btn-s');
+  btn.disabled = true;
+  allProducts = [];
+  citations = [];
+  let anyTruncated = false;
+  let completed = 0;
+
+  const setProgress = (label) => {
+    btn.innerHTML = `<span class="ld"><span></span><span></span><span></span></span> ${label}`;
+    setHTML(`<div class="state-box"><div style="font-size:26px;margin-bottom:10px">🔍</div><p>${label}</p></div>`);
+  };
+
+  setProgress(`กำลังค้นหา… (0/${batches.length})`);
+
+  try {
+    for (let b = 0; b < batches.length; b++) {
+      const srcKeys = batches[b];
+      setProgress(`กำลังค้นหา ${srcKeys.join(' + ')} … (${b}/${batches.length})`);
+
+      let parsed = null;
+      try {
+        parsed = await runBatch(key, srcKeys);
+      } catch(err) {
+        // one batch failing shouldn't kill the whole run
+        console.warn('batch failed', srcKeys, err);
+      }
+
+      if (parsed) {
+        if (parsed._salvaged) anyTruncated = true;
+        (parsed.products || []).forEach(p => allProducts.push(p));
+        completed++;
+      }
+      // live render after each batch so user sees progress
+      mergeDedupe();
+      if (allProducts.length) renderResults({ products: allProducts, summary: {}, _salvaged: anyTruncated });
+    }
+
+    if (!allProducts.length) {
+      setHTML(`<div class="notice n-warn">⚠️ ไม่พบข้อมูลราคา ลองกดค้นหาอีกครั้ง หรือเลือกแหล่งให้น้อยลง</div>`);
+    } else {
+      document.getElementById('ts').textContent = 'อัพเดท ' + new Date().toLocaleString('th-TH');
+      renderResults({ products: allProducts, summary: buildSummary(allProducts), _salvaged: anyTruncated });
+    }
+
+  } catch(e) {
+    setHTML(`<div class="notice n-err">⚠️ ${esc(e.message)}</div>`);
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = searchBtnHTML();
+}
+
+// run one batch (one or two sources) → returns parsed object or null
+async function runBatch(key, srcKeys) {
+  const resp = await fetch(GEMINI_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: buildPrompt(srcKeys) }] }],
+      tools: [{ googleSearch: {} }],
+      generationConfig: { temperature: 0.1, maxOutputTokens: 16384 }
+    })
+  });
+
+  if (!resp.ok) {
+    const e = await resp.json().catch(() => ({}));
+    const msg = e.error?.message || `HTTP ${resp.status}`;
+    if (resp.status === 400) throw new Error(`Key ไม่ถูกต้อง หรือ quota หมด: ${msg}`);
+    if (resp.status === 403) throw new Error(`API Key ไม่มีสิทธิ์: ${msg}`);
+    if (resp.status === 429) throw new Error(`เกิน rate limit ชั่วคราว: ${msg}`);
+    throw new Error(msg);
+  }
+
+  const data = await resp.json();
+
+  // collect citations from grounding
+  const gm = data.candidates?.[0]?.groundingMetadata;
+  (gm?.groundingChunks || []).forEach(c => { if (c.web) citations.push(c.web); });
+
+  const rawText = data.candidates?.[0]?.content?.parts
+    ?.filter(p => p.text)?.map(p => p.text).join('') || '';
+  return extractJSON(rawText);
+}
+
+// merge duplicates (same product_name + source + package)
+function mergeDedupe() {
+  const seen = new Map();
+  const out = [];
+  for (const p of allProducts) {
+    const k = `${p.source_name||''}|${p.product_name||p.brand||''}|${p.package||''}`.toLowerCase();
+    if (seen.has(k)) continue;
+    seen.set(k, true);
+    out.push(p);
+  }
+  allProducts = out;
+}
+
+// build summary from merged products
+function buildSummary(prods) {
+  let cheapest = null, bestPromo = null;
+  prods.forEach(p => {
+    if (p.price_per_egg && (!cheapest || p.price_per_egg < cheapest.price)) {
+      cheapest = { price: p.price_per_egg, product: p.product_name || p.brand, source: p.source_name };
+    }
+    if (p.discount_pct && (!bestPromo || p.discount_pct > bestPromo.discount_pct)) {
+      bestPromo = { discount_pct: p.discount_pct, product: p.product_name || p.brand, source: p.source_name, end_date: p.promo_end_date };
+    }
+  });
+  return { cheapest_per_egg: cheapest, best_promo: bestPromo };
+}
+
+function searchBtnHTML() {
+  return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> ค้นหาอีกครั้ง`;
+}
+
+// Robust JSON extraction: handles ```json fences, leading/trailing prose,
+// truncated/cut-off responses, and duplicate JSON blocks.
+function extractJSON(text) {
+  if (!text) return null;
+  let t = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+
+  // 1) direct parse (clean case)
+  try { return JSON.parse(t); } catch(_) {}
+
+  // 2) first balanced top-level object
+  const balanced = firstBalancedObject(t);
+  if (balanced) { try { return JSON.parse(balanced); } catch(_) {} }
+
+  // 3) salvage from a truncated response:
+  //    pull scraped_at + every COMPLETE {...} object inside "products"
+  const salvaged = salvageTruncated(t);
+  if (salvaged) return salvaged;
+
+  return null;
+}
+
+function firstBalancedObject(t) {
+  const start = t.indexOf('{');
+  if (start === -1) return null;
+  let depth = 0, inStr = false, esc2 = false;
+  for (let i = start; i < t.length; i++) {
+    const ch = t[i];
+    if (inStr) {
+      if (esc2) esc2 = false;
+      else if (ch === '\\') esc2 = true;
+      else if (ch === '"') inStr = false;
+    } else {
+      if (ch === '"') inStr = true;
+      else if (ch === '{') depth++;
+      else if (ch === '}') { depth--; if (depth === 0) return t.slice(start, i + 1); }
+    }
+  }
+  return null; // never closed → truncated
+}
+
+// Recover whatever products we can from a cut-off / repeated JSON blob.
+function salvageTruncated(t) {
+  // grab scraped_at if present
+  const dateM = t.match(/"scraped_at"\s*:\s*"([^"]*)"/);
+  const scraped_at = dateM ? dateM[1] : null;
+
+  // walk the string, collecting every complete balanced {...} that looks
+  // like a product (has "brand" or "product_name")
+  const products = [];
+  let summary = null;
+  let i = 0;
+  while (i < t.length) {
+    if (t[i] !== '{') { i++; continue; }
+    let depth = 0, inStr = false, esc2 = false, end = -1;
+    for (let j = i; j < t.length; j++) {
+      const ch = t[j];
+      if (inStr) {
+        if (esc2) esc2 = false;
+        else if (ch === '\\') esc2 = true;
+        else if (ch === '"') inStr = false;
+      } else {
+        if (ch === '"') inStr = true;
+        else if (ch === '{') depth++;
+        else if (ch === '}') { depth--; if (depth === 0) { end = j; break; } }
+      }
+    }
+    if (end === -1) {
+      // this { never closes (truncated or it's the outer wrapper):
+      // skip just this brace and keep scanning inner objects
+      i++;
+      continue;
+    }
+    const chunk = t.slice(i, end + 1);
+    try {
+      const obj = JSON.parse(chunk);
+      if (obj && (obj.brand || obj.product_name)) products.push(obj);
+      else if (obj && obj.cheapest_per_egg) summary = obj;
+    } catch(_) {}
+    i = end + 1; // jump past this object
+  }
+
+  // last-ditch: try to recover a partial product that was cut mid-object
+  if (!products.length) {
+    const pm = t.match(/"products"\s*:\s*\[\s*(\{[\s\S]*)/);
+    if (pm) {
+      let frag = pm[1];
+      // cut trailing incomplete content back to the last complete "key": value,
+      const lastComma = frag.lastIndexOf(',');
+      if (lastComma > 0) {
+        let candidate = frag.slice(0, lastComma) + '}';
+        try {
+          const obj = JSON.parse(candidate);
+          if (obj && (obj.brand || obj.product_name)) products.push(obj);
+        } catch(_) {}
+      }
+    }
+  }
+
+  if (!products.length) return null;
+  return { scraped_at, products, summary: summary || {}, _salvaged: true };
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────
+function renderResults(parsed) {
+  const prods = allProducts;
+  if (!prods.length) {
+    setHTML(`<div class="state-box"><div class="state-big">🤔</div><p>ไม่พบข้อมูล ลองเปลี่ยนตัวกรอง</p></div>`);
+    return;
+  }
+
+  const s = parsed.summary || {};
+  const promoCount = prods.filter(p => p.price_promo).length;
+  const expSoon    = prods.filter(p => { const d = parseThDate(p.promo_end_date); return d && (d - Date.now()) < 7*864e5; }).length;
+
+  let html = `<div class="metrics">
+    <div class="met"><div class="met-l">สินค้าที่พบ</div><div class="met-v">${prods.length}</div></div>
+    <div class="met"><div class="met-l">มีโปรโมชัน</div><div class="met-v c-orange">${promoCount}</div></div>
+    <div class="met"><div class="met-l">ราคา/ฟอง ถูกสุด</div><div class="met-v c-green">${s.cheapest_per_egg ? '฿'+parseFloat(s.cheapest_per_egg.price).toFixed(2) : '—'}</div></div>
+    <div class="met"><div class="met-l">โปรใกล้หมด</div><div class="met-v c-red">${expSoon}</div></div>
+  </div>`;
+
+  if (s.best_promo?.discount_pct) {
+    html += `<div class="promo-banner">🔥 <span>โปรดีที่สุด: <strong>${esc(s.best_promo.product)}</strong> ที่ ${esc(s.best_promo.source)} ลด <strong>${s.best_promo.discount_pct}%</strong>${s.best_promo.end_date ? ' · หมด '+esc(s.best_promo.end_date) : ''}</span></div>`;
+  }
+
+  const sorted = sortProds(prods);
+
+  if (parsed._salvaged) {
+    html += `<div class="notice n-warn" style="margin-bottom:10px">ℹ️ บางรอบคำตอบจาก AI ยาวเกินจึงถูกตัด — กู้เฉพาะรายการที่สมบูรณ์มาแสดง รวม ${prods.length} รายการ</div>`;
+  }
+
+  html += `<div class="tbl-ctrl">
+    <span class="tbl-ctrl-title">รายการสินค้า (${prods.length} รายการ)</span>
+    <div class="sort-btns">
+      <button class="sbtn ${sortKey==='price_eff'?'on':''}" onclick="resort('price_eff')">ราคา ↕</button>
+      <button class="sbtn ${sortKey==='price_per_egg'?'on':''}" onclick="resort('price_per_egg')">฿/ฟอง ↕</button>
+      <button class="sbtn ${sortKey==='discount_pct'?'on':''}" onclick="resort('discount_pct')">ส่วนลด ↕</button>
+    </div>
+  </div>
+  <div class="tbl-box"><table>
+  <thead><tr>
+    <th style="width:7%">รูป</th>
+    <th style="width:21%">สินค้า</th><th style="width:7%">เบอร์</th>
+    <th style="width:9%">แพ็คเกจ</th><th style="width:9%">ราคาปกติ</th>
+    <th style="width:9%">ราคาโปร</th><th style="width:7%">ส่วนลด</th>
+    <th style="width:11%">วันหมดโปร</th><th style="width:7%">฿/ฟอง</th>
+    <th style="width:13%">แหล่ง</th>
+  </tr></thead><tbody>`;
+
+  sorted.forEach(p => {
+    const hasPromo = p.price_promo && parseFloat(p.price_promo) < parseFloat(p.price_normal);
+    const expCls   = getExpCls(p.promo_end_date);
+    const tagCls   = {online:'tag-online',retail:'tag-retail',wholesale:'tag-wholesale',government:'tag-gov'}[p.source_type] || 'tag-retail';
+
+    html += `<tr>
+      <td><div class="p-img-ph">🥚</div></td>
+      <td>
+        <div class="pname">${esc(p.product_name || p.brand)}</div>
+        <div class="psub">${esc(p.brand)}${p.egg_type && p.egg_type !== 'ไข่ไก่' ? ' · '+esc(p.egg_type) : ''}</div>
+        ${p.note ? `<div class="pnote">${esc(p.note)}</div>` : ''}
+      </td>
+      <td>${esc(p.size||'—')}</td>
+      <td>${esc(p.package||'—')}${p.package_count ? `<br><span class="per-egg">${p.package_count} ฟอง</span>` : ''}</td>
+      <td>${hasPromo ? `<span class="p-was">฿${fmt(p.price_normal)}</span>` : `<span class="p-normal">฿${fmt(p.price_normal)}</span>`}</td>
+      <td>${hasPromo ? `<span class="p-promo">฿${fmt(p.price_promo)}</span>` : `<span style="color:var(--muted);font-size:12px">—</span>`}</td>
+      <td>${p.discount_pct ? `<span class="disc">−${p.discount_pct}%</span>` : `<span style="color:var(--muted);font-size:12px">—</span>`}</td>
+      <td>${p.promo_end_date && p.promo_end_date !== 'null' ? `<span class="exp ${expCls}">${esc(p.promo_end_date)}</span>` : `<span class="exp exp-none">—</span>`}</td>
+      <td>${p.price_per_egg ? `<strong>฿${parseFloat(p.price_per_egg).toFixed(2)}</strong>` : '—'}</td>
+      <td>
+        <span class="tag ${tagCls}">${esc(p.source_name)}</span>
+        ${p.url && p.url !== 'null' ? `<br><a href="${esc(p.url)}" target="_blank" rel="noopener" class="src-link">ดูสินค้า ↗</a>` : ''}
+      </td>
+    </tr>`;
+  });
+
+  html += `</tbody></table></div>`;
+
+  // citations from Google Search grounding
+  if (citations.length) {
+    html += `<div class="cite-section">
+      <h4>แหล่งข้อมูลจาก Google Search</h4>
+      <div class="cite-list">`;
+    citations.slice(0, 12).forEach((c, i) => {
+      html += `<div class="cite-item">
+        <span class="cite-num">${i+1}</span>
+        <span><a href="${esc(c.uri)}" target="_blank" rel="noopener">${esc(c.title || c.uri)}</a></span>
+      </div>`;
+    });
+    html += `</div></div>`;
+  }
+
+  html += `<div style="margin-top:10px;font-size:11px;color:var(--muted)">ข้อมูลจาก Gemini AI + Google Search · กรุณาตรวจสอบราคาจริงกับแหล่งอ้างอิงก่อนตัดสินใจซื้อ</div>`;
+
+  setHTML(html);
+}
+
+// ─── SORT ─────────────────────────────────────────────────────────────────
+function resort(key) {
+  sortAsc = (sortKey === key) ? !sortAsc : (key !== 'discount_pct');
+  sortKey = key;
+  if (allProducts.length) renderResults({ products: allProducts, summary: {} });
+}
+function sortProds(arr) {
+  return [...arr].sort((a, b) => {
+    let av, bv;
+    if (sortKey === 'price_per_egg') { av = a.price_per_egg||9999; bv = b.price_per_egg||9999; }
+    else if (sortKey === 'discount_pct') { av = a.discount_pct||0; bv = b.discount_pct||0; }
+    else { av = (a.price_promo||a.price_normal||9999); bv = (b.price_promo||b.price_normal||9999); }
+    return sortAsc ? av-bv : bv-av;
+  });
+}
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────
+function setHTML(h) { document.getElementById('results').innerHTML = h; }
+function fmt(v) { return v != null ? parseFloat(v).toFixed(0) : '—'; }
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+const MONTHS = {'ม.ค.':0,'ก.พ.':1,'มี.ค.':2,'เม.ย.':3,'พ.ค.':4,'มิ.ย.':5,'ก.ค.':6,'ส.ค.':7,'ก.ย.':8,'ต.ค.':9,'พ.ย.':10,'ธ.ค.':11};
+function parseThDate(s) {
+  if (!s || s === 'null') return null;
+  const m = s.match(/(\d+)\s+(\S+\.)\s+(\d{4})/);
+  if (!m) return null;
+  const y = parseInt(m[3]) > 2500 ? parseInt(m[3])-543 : parseInt(m[3]);
+  return new Date(y, MONTHS[m[2]]??0, parseInt(m[1]));
+}
+function getExpCls(ds) {
+  const d = parseThDate(ds);
+  if (!d) return 'exp-none';
+  const diff = d - Date.now();
+  if (diff < 3*864e5) return 'exp-soon';
+  if (diff < 7*864e5) return 'exp-warn';
+  return 'exp-ok';
+}
+</script>
+</body>
+</html>
