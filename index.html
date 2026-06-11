@@ -36,7 +36,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .hdr-gemini{margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:20px;padding:3px 10px}
 .hdr-gemini span{width:7px;height:7px;border-radius:50%;background:var(--accent);display:inline-block}
 
-main{max-width:1080px;margin:0 auto;padding:20px 14px 60px}
+main{max-width:1120px;margin:0 auto;padding:20px 14px 60px}
 
 /* SETUP CARD */
 .setup-card{background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:10px;padding:14px 18px;margin-bottom:18px}
@@ -87,7 +87,7 @@ main{max-width:1080px;margin:0 auto;padding:20px 14px 60px}
 .sbtn:hover{color:var(--text)}
 
 .tbl-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;overflow-x:auto}
-table{width:100%;border-collapse:collapse;min-width:720px}
+table{width:100%;border-collapse:collapse;min-width:850px}
 thead th{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:9px 12px;background:var(--bg);border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
 tbody tr{border-bottom:1px solid var(--border-soft)}
 tbody tr:last-child{border-bottom:none}
@@ -186,6 +186,7 @@ footer a{color:var(--accent)}
         <button class="chip" data-v="Lotus">Lotus's</button>
         <button class="chip" data-v="Big C">Big C</button>
         <button class="chip" data-v="Makro">Makro</button>
+        <button class="chip" data-v="CJ">CJ More</button>
         <button class="chip" data-v="Shopee">Shopee</button>
         <button class="chip" data-v="Lazada">Lazada</button>
         <button class="chip" data-v="ตลาดไท">ตลาดไท</button>
@@ -302,6 +303,7 @@ function initChips() {
 const SRC_MAP = {
   'Tops':'Tops Online (tops.co.th)', 'Lotus':"Lotus's Online (lotuss.co.th)",
   'Big C':'Big C Online (bigc.co.th)', 'Makro':'Makro Online (makro.co.th)',
+  'CJ':'CJ More / CJ Supermarket (cjexpress.co.th)', // <-- เพิ่ม CJ
   'Shopee':'Shopee Thailand (shopee.co.th)', 'Lazada':'Lazada Thailand (lazada.co.th)',
   'ตลาดไท':'ตลาดไท (talaadthai.com)', 'กรมพาณิชย์':'กรมการค้าภายใน (data.moc.go.th)'
 };
@@ -318,7 +320,7 @@ function buildPrompt(srcKeys) {
 ค้นหาราคาไข่ไก่ไทยจาก: ${srcText}
 ${brandText} | ${sizeText} | ${packText}
 
-สำหรับแต่ละสินค้าให้หา: ราคาปกติ, ราคาโปรโมชัน (ถ้ามี), วันสิ้นสุดโปรโมชัน, URL หน้าสินค้าโดยตรง
+สำหรับแต่ละสินค้าให้หา: ราคาปกติ, ราคาโปรโมชัน (ถ้ามี), วันสิ้นสุดโปรโมชัน, วันที่อัพเดทราคาล่าสุด, URL หน้าสินค้าโดยตรง
 
 จำกัดไม่เกิน 12 รายการต่อรอบ เพื่อให้ JSON ครบถ้วนไม่ถูกตัด
 
@@ -340,6 +342,7 @@ ${brandText} | ${sizeText} | ${packText}
       "discount_pct": null,
       "promo_detail": null,
       "promo_end_date": null,
+      "updated_date": "${today}",
       "price_per_egg": 4.90,
       "url": "https://...",
       "note": ""
@@ -368,7 +371,7 @@ async function doSearch() {
   const allSources = Object.keys(SRC_MAP);
   let batches;
   if (sel.src === 'all') {
-    // 4 batches of 2 sources each → keeps each JSON short & complete
+    // 4 batches of 2-3 sources each → keeps each JSON short & complete
     batches = [];
     for (let i = 0; i < allSources.length; i += 2) batches.push(allSources.slice(i, i + 2));
   } else {
@@ -415,7 +418,7 @@ async function doSearch() {
     if (!allProducts.length) {
       setHTML(`<div class="notice n-warn">⚠️ ไม่พบข้อมูลราคา ลองกดค้นหาอีกครั้ง หรือเลือกแหล่งให้น้อยลง</div>`);
     } else {
-      document.getElementById('ts').textContent = 'อัพเดท ' + new Date().toLocaleString('th-TH');
+      document.getElementById('ts').textContent = 'อัพเดทล่าสุดเมื่อ ' + new Date().toLocaleString('th-TH');
       renderResults({ products: allProducts, summary: buildSummary(allProducts), _salvaged: anyTruncated });
     }
 
@@ -503,8 +506,7 @@ function extractJSON(text) {
   const balanced = firstBalancedObject(t);
   if (balanced) { try { return JSON.parse(balanced); } catch(_) {} }
 
-  // 3) salvage from a truncated response:
-  //    pull scraped_at + every COMPLETE {...} object inside "products"
+  // 3) salvage from a truncated response
   const salvaged = salvageTruncated(t);
   if (salvaged) return salvaged;
 
@@ -530,14 +532,10 @@ function firstBalancedObject(t) {
   return null; // never closed → truncated
 }
 
-// Recover whatever products we can from a cut-off / repeated JSON blob.
 function salvageTruncated(t) {
-  // grab scraped_at if present
   const dateM = t.match(/"scraped_at"\s*:\s*"([^"]*)"/);
   const scraped_at = dateM ? dateM[1] : null;
 
-  // walk the string, collecting every complete balanced {...} that looks
-  // like a product (has "brand" or "product_name")
   const products = [];
   let summary = null;
   let i = 0;
@@ -557,8 +555,6 @@ function salvageTruncated(t) {
       }
     }
     if (end === -1) {
-      // this { never closes (truncated or it's the outer wrapper):
-      // skip just this brace and keep scanning inner objects
       i++;
       continue;
     }
@@ -568,15 +564,13 @@ function salvageTruncated(t) {
       if (obj && (obj.brand || obj.product_name)) products.push(obj);
       else if (obj && obj.cheapest_per_egg) summary = obj;
     } catch(_) {}
-    i = end + 1; // jump past this object
+    i = end + 1;
   }
 
-  // last-ditch: try to recover a partial product that was cut mid-object
   if (!products.length) {
     const pm = t.match(/"products"\s*:\s*\[\s*(\{[\s\S]*)/);
     if (pm) {
       let frag = pm[1];
-      // cut trailing incomplete content back to the last complete "key": value,
       const lastComma = frag.lastIndexOf(',');
       if (lastComma > 0) {
         let candidate = frag.slice(0, lastComma) + '}';
@@ -631,12 +625,17 @@ function renderResults(parsed) {
   </div>
   <div class="tbl-box"><table>
   <thead><tr>
-    <th style="width:7%">รูป</th>
-    <th style="width:21%">สินค้า</th><th style="width:7%">เบอร์</th>
-    <th style="width:9%">แพ็คเกจ</th><th style="width:9%">ราคาปกติ</th>
-    <th style="width:9%">ราคาโปร</th><th style="width:7%">ส่วนลด</th>
-    <th style="width:11%">วันหมดโปร</th><th style="width:7%">฿/ฟอง</th>
-    <th style="width:13%">แหล่ง</th>
+    <th style="width:5%">รูป</th>
+    <th style="width:19%">สินค้า</th>
+    <th style="width:6%">เบอร์</th>
+    <th style="width:8%">แพ็คเกจ</th>
+    <th style="width:8%">ราคาปกติ</th>
+    <th style="width:8%">ราคาโปร</th>
+    <th style="width:6%">ส่วนลด</th>
+    <th style="width:9%">วันหมดโปร</th>
+    <th style="width:7%">฿/ฟอง</th>
+    <th style="width:12%">แหล่ง</th>
+    <th style="width:12%">อัพเดท</th>
   </tr></thead><tbody>`;
 
   sorted.forEach(p => {
@@ -662,6 +661,7 @@ function renderResults(parsed) {
         <span class="tag ${tagCls}">${esc(p.source_name)}</span>
         ${p.url && p.url !== 'null' ? `<br><a href="${esc(p.url)}" target="_blank" rel="noopener" class="src-link">ดูสินค้า ↗</a>` : ''}
       </td>
+      <td style="font-size:11px;color:var(--muted)">${esc(p.updated_date || '—')}</td>
     </tr>`;
   });
 
